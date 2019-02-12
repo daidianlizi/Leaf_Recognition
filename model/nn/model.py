@@ -33,7 +33,7 @@ parent_data = data.copy()    ## Always a good idea to keep a copy of original da
 ID = data.pop('id')
 
 data.shape
-data.describe()
+print(data.describe())
 
 
 ## Since the labels are textual, so we encode them categorically
@@ -51,7 +51,7 @@ X = StandardScaler().fit(data).transform(data)
 ## normalizing does not help here; l1 and l2 allowed
 ## X = preprocessing.normalize(data, norm='l1')
 print(X.shape)
-X
+print(X)
 
 
 ## We will be working with categorical crossentropy function
@@ -124,7 +124,7 @@ plt.legend(['train', 'test'], loc='upper left')
 plt.show()
 
 ## read test file
-test = pd.read_csv('../input/test.csv')
+test = pd.read_csv('input/test.csv')
 index = test.pop('id')
 
 ## we need to perform the same transformations from the training set to the test set
