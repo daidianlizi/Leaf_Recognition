@@ -133,7 +133,7 @@ test = StandardScaler().fit(test).transform(test)
 yPred = model.predict_proba(test)
 
 ## Converting the test predictions in a dataframe as depicted by sample submission
-yPred = pd.DataFrame(yPred,index=index,columns=sort(parent_data.species.unique()))
+yPred = pd.DataFrame(yPred,index=index,columns=sorted(parent_data.species.unique()))
 
 ## write submission to file
 fp = open('submission_nn_kernel.csv','w')
