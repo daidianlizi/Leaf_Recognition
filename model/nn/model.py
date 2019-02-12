@@ -1,3 +1,8 @@
+## Ignore duplicated library
+import os
+os.environ['KMP_DUPLICATE_LIB_OK']='True'
+
+
 ## Measure execution time, becaus Kaggle cloud fluctuates  
 
 import time
