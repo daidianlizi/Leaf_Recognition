@@ -106,3 +106,4 @@ venv.bak/
 #MISC ignored files
 *.swp
 .idea
+*.DS_Store*
