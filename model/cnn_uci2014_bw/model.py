@@ -19,6 +19,7 @@ from PIL import Image
 
 ## Importing sklearn libraries
 
+from sklearn.preprocessing import MinMaxScaler
 from sklearn.preprocessing import StandardScaler
 from sklearn.preprocessing import LabelEncoder
 from sklearn.model_selection import StratifiedShuffleSplit
@@ -58,30 +59,16 @@ for species_name in os.listdir(path_to_image_dir): #assuming gif
                 print(str(e))
             
 print(image_list.shape)
-#print("Total input images: {}".format(len(image_list)))
-
-
-## Read data from the CSV file
-
-data = pd.read_csv('data/uci_dataset_2014_with_RGB_pics/leaf.csv')
-parent_data = data.copy()    ## Always a good idea to keep a copy of original data
-ID = data.pop('id')
-
-print(data.describe())
 
 ## Since the labels are textual, so we encode them categorically
-
-y = data.pop('species')
-y = LabelEncoder().fit(y).transform(y)
+y = LabelEncoder().fit(species_list).transform(species_list)
 print(y.shape)
 
 
 ## Most of the learning algorithms are prone to feature scaling
 ## Standardising the data to give zero mean =)
-from sklearn import preprocessing
-X = StandardScaler().fit(data).transform(data)
-## normalizing does not help here; l1 and l2 allowed
-## X = preprocessing.normalize(data, norm='l1')
+X = image_list.astype(float)
+
 print(X.shape)
 print(X)
 
@@ -170,7 +157,7 @@ index = test.pop('id')
 species = test.pop('species')
 
 ## we need to perform the same transformations from the training set to the test set
-test = preprocessing.MinMaxScaler().fit(test).transform(test)
+test = MinMaxScaler().fit(test).transform(test)
 test = StandardScaler().fit(test).transform(test)
 yPred = model.predict_proba(test)
 
