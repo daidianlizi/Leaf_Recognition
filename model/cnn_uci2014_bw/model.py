@@ -39,14 +39,27 @@ from keras.callbacks import EarlyStopping
 path_to_image_dir = "data/uci_dataset_2014_with_RGB_pics/BW"
 
 image_list = []
+np_list = None
+pd_array = None
       
 for species_name in os.listdir(path_to_image_dir): #assuming gif
     for file_name in os.listdir("/".join([path_to_image_dir, species_name])):
         full_path = "/".join([path_to_image_dir, species_name, file_name])
-        im = Image.open(full_path)
-        image_list.append(im)
+        imarray = np.array(Image.open(full_path))
+        image_list.append(imarray)
 
-print("Total input images: {}".format(len(image_list)))
+        np_array = np.array(imarray.copy())
+        if np_list is None:
+            np_list = np_array.copy()
+            np_list.reshape(1, np_array.shape[0], np_array.shape[1])
+        else:
+            np_array.reshape(1, np_array.shape[0], np_array.shape[1])
+            np_list = np.concatenate(np_list, np_array)
+            
+pd_array = pd.DataFrame(np_list)
+print(pd_array.shape)
+#print("Total input images: {}".format(len(image_list)))
+
 
 ## Read data from the CSV file
 
