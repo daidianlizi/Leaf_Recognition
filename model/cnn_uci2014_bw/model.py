@@ -38,26 +38,26 @@ from keras.callbacks import EarlyStopping
 ## Read data from UCI 2014 BW image files
 path_to_image_dir = "data/uci_dataset_2014_with_RGB_pics/BW"
 
-image_list = []
-np_list = None
-pd_array = None
-      
+image_list = None
+species_list = []
 for species_name in os.listdir(path_to_image_dir): #assuming gif
     for file_name in os.listdir("/".join([path_to_image_dir, species_name])):
+        # Put species name into list
+        species_list.append(species_name)
+        
+        # Create input images
         full_path = "/".join([path_to_image_dir, species_name, file_name])
-        imarray = np.array(Image.open(full_path))
-        image_list.append(imarray)
-
-        np_array = np.array(imarray.copy())
-        if np_list is None:
-            np_list = np_array.copy()
-            np_list.reshape(1, np_array.shape[0], np_array.shape[1])
+        im_np = np.array(Image.open(full_path))
+        im_np = np.reshape(im_np, (1, im_np.shape[0], im_np.shape[1]))
+        if image_list is None:
+            image_list = im_np.copy()
         else:
-            np_array.reshape(1, np_array.shape[0], np_array.shape[1])
-            np_list = np.concatenate(np_list, np_array)
+            try:
+                image_list = np.concatenate((image_list, im_np))
+            except ValueError as e:
+                print(str(e))
             
-pd_array = pd.DataFrame(np_list)
-print(pd_array.shape)
+print(image_list.shape)
 #print("Total input images: {}".format(len(image_list)))
 
 
