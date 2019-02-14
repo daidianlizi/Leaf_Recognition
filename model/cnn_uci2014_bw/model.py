@@ -153,23 +153,6 @@ plt.xlabel('epoch')
 plt.legend(['train', 'test'], loc='upper left')
 plt.show()
 
-## read test file
-test = pd.read_csv('data/uci_dataset_2014_with_RGB_pics/leaf.csv')
-index = test.pop('id')
-species = test.pop('species')
-
-## we need to perform the same transformations from the training set to the test set
-test = MinMaxScaler().fit(test).transform(test)
-test = StandardScaler().fit(test).transform(test)
-yPred = model.predict_proba(test)
-
-## Converting the test predictions in a dataframe as depicted by sample submission
-yPred = pd.DataFrame(yPred,columns=sorted(parent_data.species.unique()))
-
-## write submission to file
-fp = open('submission_nn_kernel.csv','w')
-fp.write(yPred.to_csv())
-
 ## print run time
 end = time.time()
 print(round((end-start),2), "seconds")
