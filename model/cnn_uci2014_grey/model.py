@@ -41,8 +41,9 @@ path_to_image_dir = "data/uci_dataset_2014_with_RGB_pics/GREY"
 
 image_list = None
 species_list = []
-for species_name in os.listdir(path_to_image_dir): #assuming gif
-    for file_name in os.listdir("/".join([path_to_image_dir, species_name])):
+for species_name in sorted(os.listdir(path_to_image_dir)): #assuming gif
+    print(species_name)
+    for file_name in sorted(os.listdir("/".join([path_to_image_dir, species_name]))):
         # Put species name into list
         species_list.append(species_name)
         
