@@ -112,18 +112,22 @@ print("x_val dim:   ",x_val.shape)
 
 model = Sequential()
 
-model.add(Convolution2D(64, kernel_size=(11, 11), strides=(4, 4),
+model.add(Convolution2D(8, kernel_size=(7, 7), strides=(2, 2),
                         activation='relu',
                         padding='same',
                         input_shape=input_shape))
 
 model.add(MaxPooling2D(pool_size=(2, 2), strides=(2, 2)))
+model.add(Dropout(0.1))
+
+model.add(Convolution2D(16, (3, 3), activation='relu'))
+model.add(MaxPooling2D(pool_size=(2, 2), strides=(2, 2)))
+model.add(Dropout(0.2))
 
 model.add(Convolution2D(32, (3, 3), activation='relu'))
 model.add(MaxPooling2D(pool_size=(2, 2), strides=(2, 2)))
+model.add(Dropout(0.3))
 
-model.add(Convolution2D(64, (3, 3), activation='relu'))
-model.add(MaxPooling2D(pool_size=(2, 2), strides=(2, 2)))
 
 model.add(Flatten())
 model.add(Dense(300, activation='relu'))
