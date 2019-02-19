@@ -112,22 +112,28 @@ print("x_val dim:   ",x_val.shape)
 
 model = Sequential()
 
-model.add(Convolution2D(10, kernel_size=(20, 20), strides=(4, 4),
+model.add(Convolution2D(64, kernel_size=(11, 11), strides=(4, 4),
                         activation='relu',
+                        padding='same',
                         input_shape=input_shape))
-model.add(MaxPooling2D(pool_size=(2, 2), strides=(1, 1)))
-model.add(Convolution2D(32, (3, 3), activation='relu'))
-model.add(MaxPooling2D(pool_size=(2, 2)))
-model.add(Flatten())
 
-model.add(Dense(200, activation='relu'))
+model.add(MaxPooling2D(pool_size=(2, 2), strides=(2, 2)))
+
+model.add(Convolution2D(32, (3, 3), activation='relu'))
+model.add(MaxPooling2D(pool_size=(2, 2), strides=(2, 2)))
+
+model.add(Convolution2D(64, (3, 3), activation='relu'))
+model.add(MaxPooling2D(pool_size=(2, 2), strides=(2, 2)))
+
+model.add(Flatten())
+model.add(Dense(300, activation='relu'))
 model.add(Dense(40, activation='softmax'))
 
 ## Error is measured as categorical crossentropy or multiclass logloss
 ## Adagrad, rmsprop, SGD, Adadelta, Adam, Adamax, Nadam
 
 #model.compile(loss='binary_crossentropy',optimizer='rmsprop', metrics = ["accuracy"])
-model.compile(loss='binary_crossentropy',optimizer='rmsprop', metrics = ["accuracy"])
+model.compile(loss='categorical_crossentropy',optimizer='adam', metrics = ["accuracy"])
 
 ## Fitting the model on the whole training data with early stopping
 early_stopping = EarlyStopping(monitor='val_loss', patience=300)
