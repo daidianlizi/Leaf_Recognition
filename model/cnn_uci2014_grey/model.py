@@ -93,7 +93,9 @@ print(y_cat.shape)
 
 ## retain class balances
 sss = StratifiedShuffleSplit(n_splits=10, test_size=0.2,random_state=12345)
-train_index, val_index = next(iter(sss.split(X, y)))
+sss_iter = iter(sss.split(X, y))
+
+train_index, val_index = next(sss_iter)
 x_train, x_val = X[train_index], X[val_index]
 y_train, y_val = y_cat[train_index], y_cat[val_index]
 
@@ -142,7 +144,18 @@ model.compile(loss='categorical_crossentropy',optimizer='adam', metrics = ["accu
 ## Fitting the model on the whole training data with early stopping
 early_stopping = EarlyStopping(monitor='val_loss', patience=300)
 
-history = model.fit(x_train, y_train,batch_size=10,epochs=10 ,verbose=1,
+
+for _ in range(0,5):
+    train_index, val_index = next(sss_iter)
+    x_train, x_val = X[train_index], X[val_index]
+    y_train, y_val = y_cat[train_index], y_cat[val_index]
+
+    channel_num = 1
+    x_train = np.reshape(x_train, (x_train.shape[0], x_train.shape[1], x_train.shape[2], channel_num))
+    x_val   = np.reshape(x_val,   (x_val.shape[0],   x_val.shape[1],   x_val.shape[2],   channel_num))
+    input_shape = (x_train.shape[1], x_train.shape[2], channel_num)
+    
+    history = model.fit(x_train, y_train,batch_size=10,epochs=5 ,verbose=1,
                     validation_data=(x_val, y_val),callbacks=[early_stopping])
 
 ## we need to consider the loss for final submission to leaderboard
