@@ -105,16 +105,15 @@ print("x_val dim:   ",x_val.shape)
 
 model = Sequential()
 
-model.add(Convolution2D(16, kernel_size=(20, 20), strides=(4, 3),
+model.add(Convolution2D(16, kernel_size=(20, 20), strides=(4, 4),
                  activation='relu',
                  input_shape=input_shape))
 model.add(MaxPooling2D(pool_size=(2, 2), strides=(1, 1)))
 model.add(Convolution2D(32, (3, 3), activation='relu'))
 model.add(MaxPooling2D(pool_size=(2, 2)))
-model.add(Dropout(0.25))
 model.add(Flatten())
 
-model.add(Dense(300, activation='relu'))
+model.add(Dense(200, activation='relu'))
 model.add(Dense(30, activation='softmax'))
 
 ## Error is measured as categorical crossentropy or multiclass logloss
@@ -125,7 +124,7 @@ model.compile(loss='categorical_crossentropy',optimizer='rmsprop', metrics = ["a
 ## Fitting the model on the whole training data with early stopping
 early_stopping = EarlyStopping(monitor='val_loss', patience=300)
 
-history = model.fit(x_train, y_train,batch_size=5,epochs=10 ,verbose=1,
+history = model.fit(x_train, y_train,batch_size=10,epochs=10 ,verbose=1,
                     validation_data=(x_val, y_val),callbacks=[early_stopping])
 
 ## we need to consider the loss for final submission to leaderboard
