@@ -69,6 +69,17 @@ print(y.shape)
 ## Standardising the data to give zero mean =)
 X = image_list.astype(float)
 
+
+#X = MinMaxScaler().fit(X).transform(X)
+scalers = {}
+for i in range(X.shape[0]):
+    scalers[i] = MinMaxScaler()
+    #scalers[i] = MinMaxScaler(feature_range=(-1,1))
+    X[i, :, :] = scalers[i].fit_transform(X[i, :, :]) 
+
+
+#X = image_list
+
 print(X.shape)
 #print(X)
 
