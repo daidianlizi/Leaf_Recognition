@@ -91,21 +91,15 @@ from keras import utils as np_utils
 y_cat = to_categorical(y)
 print(y_cat.shape)
 
+fold_size = 5
 ## retain class balances
-sss = StratifiedShuffleSplit(n_splits=10, test_size=0.2,random_state=12345)
+sss = StratifiedShuffleSplit(n_splits=fold_size, test_size=0.2,random_state=12345)
 sss_iter = iter(sss.split(X, y))
 
-train_index, val_index = next(sss_iter)
-x_train, x_val = X[train_index], X[val_index]
-y_train, y_val = y_cat[train_index], y_cat[val_index]
-
+# Generate input shape
 channel_num = 1
-x_train = np.reshape(x_train, (x_train.shape[0], x_train.shape[1], x_train.shape[2], channel_num))
-x_val   = np.reshape(x_val,   (x_val.shape[0],   x_val.shape[1],   x_val.shape[2],   channel_num))
-input_shape = (x_train.shape[1], x_train.shape[2], channel_num)
-
-print("x_train dim: ",x_train.shape)
-print("x_val dim:   ",x_val.shape)
+input_shape = (X.shape[1], X.shape[2], channel_num)
+print("input shape: " + str(input_shape))
 
 ## Developing a layered model for Neural Networks
 ## Input dimensions should be equal to the number of features
@@ -145,7 +139,7 @@ model.compile(loss='categorical_crossentropy',optimizer='adam', metrics = ["accu
 early_stopping = EarlyStopping(monitor='val_loss', patience=300)
 
 
-for _ in range(0,5):
+for _ in range(0,fold_size):
     train_index, val_index = next(sss_iter)
     x_train, x_val = X[train_index], X[val_index]
     y_train, y_val = y_cat[train_index], y_cat[val_index]
