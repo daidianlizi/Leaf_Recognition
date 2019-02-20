@@ -179,7 +179,8 @@ plt.title('model loss')
 plt.ylabel('loss')
 plt.xlabel('epoch')
 plt.legend(['train', 'test'], loc='upper left')
-plt.show()
+plt.savefig('loss.jpg')
+#plt.show()
 
 ## Plotting the error with the number of iterations
 ## With each iteration the error reduces smoothly
@@ -189,7 +190,8 @@ plt.title('model accuracy')
 plt.ylabel('accuracy')
 plt.xlabel('epoch')
 plt.legend(['train', 'test'], loc='upper left')
-plt.show()
+plt.savefig('accuracy.jpg')
+#plt.show()
 
 ## print run time
 end = time.time()
