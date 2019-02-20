@@ -119,7 +119,8 @@ model.add(Dense(30, activation='softmax'))
 ## Error is measured as categorical crossentropy or multiclass logloss
 ## Adagrad, rmsprop, SGD, Adadelta, Adam, Adamax, Nadam
 
-model.compile(loss='binary_crossentropy',optimizer='rmsprop', metrics = ["accuracy"])
+#model.compile(loss='binary_crossentropy',optimizer='rmsprop', metrics = ["accuracy"])
+model.compile(loss='categorical_crossentropy',optimizer='adam', metrics = ["accuracy"])
 
 ## Fitting the model on the whole training data with early stopping
 early_stopping = EarlyStopping(monitor='val_loss', patience=300)
