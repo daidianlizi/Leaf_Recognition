@@ -138,6 +138,10 @@ model.compile(loss='categorical_crossentropy',optimizer='adam', metrics = ["accu
 ## Fitting the model on the whole training data with early stopping
 early_stopping = EarlyStopping(monitor='val_loss', patience=300)
 
+history_loss = []
+history_val_loss = []
+history_acc = []
+history_val_acc = []
 
 for _ in range(0,fold_size):
     train_index, val_index = next(sss_iter)
@@ -152,20 +156,25 @@ for _ in range(0,fold_size):
     history = model.fit(x_train, y_train,batch_size=10,epochs=5 ,verbose=1,
                     validation_data=(x_val, y_val),callbacks=[early_stopping])
 
+    history_loss += history.history['loss']
+    history_val_loss += history.history['val_loss']
+    history_acc += history.history['acc']
+    history_val_acc += history.history['val_acc']
+    
 ## we need to consider the loss for final submission to leaderboard
 ## print(history.history.keys())
-print('val_acc: ',max(history.history['val_acc']))
-print('val_loss: ',min(history.history['val_loss']))
-print('train_acc: ',max(history.history['acc']))
-print('train_loss: ',min(history.history['loss']))
+print('val_acc: ',max(history_val_acc))
+print('val_loss: ',min(history_val_loss))
+print('train_acc: ',max(history_acc))
+print('train_loss: ',min(history_loss))
 
 print()
-print("train/val loss ratio: ", min(history.history['loss'])/min(history.history['val_loss']))
+print("train/val loss ratio: ", min(history_loss)/min(history_val_loss))
 
 ## summarize history for loss
 ## Plotting the loss with the number of iterations
-plt.semilogy(history.history['loss'])
-plt.semilogy(history.history['val_loss'])
+plt.semilogy(history_loss)
+plt.semilogy(history_val_loss)
 plt.title('model loss')
 plt.ylabel('loss')
 plt.xlabel('epoch')
@@ -174,8 +183,8 @@ plt.show()
 
 ## Plotting the error with the number of iterations
 ## With each iteration the error reduces smoothly
-plt.plot(history.history['acc'])
-plt.plot(history.history['val_acc'])
+plt.plot(history_acc)
+plt.plot(history_val_acc)
 plt.title('model accuracy')
 plt.ylabel('accuracy')
 plt.xlabel('epoch')
