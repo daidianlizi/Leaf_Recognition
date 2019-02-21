@@ -184,6 +184,7 @@ plt.savefig('loss.jpg')
 
 ## Plotting the error with the number of iterations
 ## With each iteration the error reduces smoothly
+plt.clf()
 plt.plot(history_acc)
 plt.plot(history_val_acc)
 plt.title('model accuracy')
