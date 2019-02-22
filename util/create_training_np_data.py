@@ -30,8 +30,6 @@ for species_name in sorted(os.listdir(path_to_train_augment_image_dir)):
         train_image_list = helper.cascade_npdata(image_list=train_image_list, np_input=im_np)
         train_species_list.append(species_name)
 
-    break
-
 train_image_list.tofile("trainX.data")
 
 with open("trainY.data", "wb") as fp:
