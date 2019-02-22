@@ -65,7 +65,7 @@ for species_name in sorted(os.listdir(path_to_train_image_dir)):
 
         im_np = np.array(im_pil_orig)
         im_np = np.reshape(im_np, (1, img_channel_num, im_np.shape[0], im_np.shape[1]))
-        helper.cascade_npdata(image_list=train_image_list, np_input=im_np)
+        train_image_list = helper.cascade_npdata(image_list=train_image_list, np_input=im_np)
 
         # TODO: we have to do data augmentation
         for augmented_img in augmented_img_list:
@@ -73,7 +73,9 @@ for species_name in sorted(os.listdir(path_to_train_image_dir)):
 
             im_np = np.array(augmented_img)
             im_np = np.reshape(im_np, (1, img_channel_num, im_np.shape[0], im_np.shape[1]))
-            helper.cascade_npdata(image_list=train_image_list, np_input=im_np)
+            train_image_list = helper.cascade_npdata(image_list=train_image_list, np_input=im_np)
+
+        print("train_image_list len: " + str(len(train_image_list)))
 
 print(train_image_list.shape)
 

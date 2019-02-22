@@ -68,6 +68,6 @@ def gen_augmented_image_list(plt_input=None):
         # paste the content images
         img_displaced.paste(img_content, box=[x_index, y_index])
 
-        ret_list += img_displaced
+        ret_list.append(img_displaced)
 
     return ret_list
