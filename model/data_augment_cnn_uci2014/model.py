@@ -71,7 +71,7 @@ print("input shape: " + str(input_shape))
 
 model = Sequential()
 
-model.add(Convolution2D(8, kernel_size=(7, 7), strides=(5, 5),
+model.add(Convolution2D(16, kernel_size=(7, 7), strides=(3, 3),
                         activation='relu',
                         padding='same',
                         input_shape=input_shape, data_format='channels_first'))
@@ -80,11 +80,11 @@ model.add(MaxPooling2D(pool_size=(2, 2), strides=(2, 2),
                        dim_ordering="th"))
 model.add(Dropout(0.1))
 
-model.add(Convolution2D(16, (3, 3), activation='relu', data_format='channels_first'))
+model.add(Convolution2D(32, (3, 3), activation='relu', data_format='channels_first'))
 model.add(MaxPooling2D(pool_size=(2, 2), strides=(2, 2), dim_ordering="th"))
 model.add(Dropout(0.2))
 
-model.add(Convolution2D(32, (3, 3), activation='relu', data_format='channels_first'))
+model.add(Convolution2D(64, (3, 3), activation='relu', data_format='channels_first'))
 model.add(MaxPooling2D(pool_size=(2, 2), strides=(2, 2), dim_ordering="th"))
 model.add(Dropout(0.3))
 
@@ -117,7 +117,7 @@ for _ in range(0,fold_size):
     #x_val   = np.reshape(x_val,   (x_val.shape[0],   x_val.shape[1],   x_val.shape[2],   channel_num))
     input_shape = (x_train.shape[1], x_train.shape[2], channel_num)
 
-    history = model.fit(x_train, y_train,batch_size=30,epochs=5 ,verbose=1,
+    history = model.fit(x_train, y_train,batch_size=20,epochs=5 ,verbose=1,
                     validation_data=(x_val, y_val),callbacks=[early_stopping])
 
     history_loss += history.history['loss']
