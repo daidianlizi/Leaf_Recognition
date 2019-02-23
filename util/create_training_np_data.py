@@ -22,7 +22,7 @@ for species_name in sorted(os.listdir(path_to_train_augment_image_dir)):
 
         print(full_path)
         # Fetch original training data
-        im_pil_orig = Image.open(full_path)
+        im_pil_orig = Image.open(full_path).convert('L')
 
         im_np = np.array(im_pil_orig)
         im_np = np.reshape(im_np, (1, img_channel_num, im_np.shape[0], im_np.shape[1]))
