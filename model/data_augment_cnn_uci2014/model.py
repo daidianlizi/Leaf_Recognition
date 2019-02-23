@@ -2,7 +2,7 @@
 import os
 os.environ['KMP_DUPLICATE_LIB_OK']='True'
 import glob
-
+import pickle
 
 ## Measure execution time, becaus Kaggle cloud fluctuates
 
@@ -36,58 +36,11 @@ from keras.callbacks import EarlyStopping
 
 from util.HelperFunction import helperfunction as helper
 
-## Read data from UCI 2014 Train directory
-## Data is the masked gery input file
+X = np.fromfile("trainX.data", dtype=np.uint8)
+X = np.reshape(X,(1410 ,1, 960, 720))
 
-img_channel_num = 1
-
-path_to_train_image_dir = "data/uci_dataset_2014_with_RGB_pics/TRAIN/"
-path_to_validation_image_dir = "data/uci_dataset_2014_with_RGB_pics/VALIDATION"
-
-train_image_list = None
-train_species_list = []
-for species_name in sorted(os.listdir(path_to_train_image_dir)):
-    print(species_name)
-    for file_name in sorted(os.listdir("/".join([path_to_train_image_dir, species_name]))):
-
-        # Create input images
-        full_path = "/".join([path_to_train_image_dir, species_name, file_name])
-
-        # Fetch original training data
-        im_pil_orig = Image.open(full_path)
-
-        augmented_img_list = helper.gen_augmented_image_list(im_pil_orig)
-        assert(len(augmented_img_list) > 0)
-
-
-        # Put species name into list
-        train_species_list.append(species_name)
-
-        im_np = np.array(im_pil_orig)
-        im_np = np.reshape(im_np, (1, img_channel_num, im_np.shape[0], im_np.shape[1]))
-        train_image_list = helper.cascade_npdata(image_list=train_image_list, np_input=im_np)
-
-        # TODO: we have to do data augmentation
-        for augmented_img in augmented_img_list:
-            train_species_list.append(species_name)
-
-            im_np = np.array(augmented_img)
-            im_np = np.reshape(im_np, (1, img_channel_num, im_np.shape[0], im_np.shape[1]))
-            train_image_list = helper.cascade_npdata(image_list=train_image_list, np_input=im_np)
-
-        print("train_image_list len: " + str(len(train_image_list)))
-
-print(train_image_list.shape)
-
-## Since the labels are textual, so we encode them categorically
-y = LabelEncoder().fit(species_list).transform(species_list)
-print(y.shape)
-
-
-## Most of the learning algorithms are prone to feature scaling
-## Standardising the data to give zero mean =)
-X = image_list.astype(float)
-
+train_species_list = pickle.load(open("trainY.data", 'rb'))
+y = LabelEncoder().fit(train_species_list).transform(train_species_list)
 
 #X = MinMaxScaler().fit(X).transform(X)
 #TODO: masked out scaler
@@ -97,16 +50,8 @@ X = image_list.astype(float)
 #    #scalers[i] = MinMaxScaler(feature_range=(-1,1))
 #    X[i, :, :] = scalers[i].fit_transform(X[i, :, :])
 
-
-#X = image_list
-
-print(X.shape)
-#print(X)
-
-
 ## We will be working with categorical crossentropy function
 ## It is required to further convert the labels into "one-hot" representation
-from keras import utils as np_utils
 y_cat = to_categorical(y)
 print(y_cat.shape)
 
@@ -116,8 +61,7 @@ sss = StratifiedShuffleSplit(n_splits=fold_size, test_size=0.2,random_state=1234
 sss_iter = iter(sss.split(X, y))
 
 # Generate input shape
-channel_num = 1
-input_shape = (X.shape[1], X.shape[2], channel_num)
+input_shape = (X.shape[1], X.shape[2], X.shape[3])
 print("input shape: " + str(input_shape))
 
 ## Developing a layered model for Neural Networks
@@ -127,26 +71,27 @@ print("input shape: " + str(input_shape))
 
 model = Sequential()
 
-model.add(Convolution2D(8, kernel_size=(7, 7), strides=(2, 2),
+model.add(Convolution2D(8, kernel_size=(7, 7), strides=(5, 5),
                         activation='relu',
                         padding='same',
-                        input_shape=input_shape))
+                        input_shape=input_shape, data_format='channels_first'))
 
-model.add(MaxPooling2D(pool_size=(2, 2), strides=(2, 2)))
+model.add(MaxPooling2D(pool_size=(2, 2), strides=(2, 2),
+                       dim_ordering="th"))
 model.add(Dropout(0.1))
 
-model.add(Convolution2D(16, (3, 3), activation='relu'))
-model.add(MaxPooling2D(pool_size=(2, 2), strides=(2, 2)))
+model.add(Convolution2D(16, (3, 3), activation='relu', data_format='channels_first'))
+model.add(MaxPooling2D(pool_size=(2, 2), strides=(2, 2), dim_ordering="th"))
 model.add(Dropout(0.2))
 
-model.add(Convolution2D(32, (3, 3), activation='relu'))
-model.add(MaxPooling2D(pool_size=(2, 2), strides=(2, 2)))
+model.add(Convolution2D(32, (3, 3), activation='relu', data_format='channels_first'))
+model.add(MaxPooling2D(pool_size=(2, 2), strides=(2, 2), dim_ordering="th"))
 model.add(Dropout(0.3))
 
 
 model.add(Flatten())
 model.add(Dense(300, activation='relu'))
-model.add(Dense(40, activation='softmax'))
+model.add(Dense(30, activation='softmax'))
 
 ## Error is measured as categorical crossentropy or multiclass logloss
 ## Adagrad, rmsprop, SGD, Adadelta, Adam, Adamax, Nadam
@@ -168,11 +113,11 @@ for _ in range(0,fold_size):
     y_train, y_val = y_cat[train_index], y_cat[val_index]
 
     channel_num = 1
-    x_train = np.reshape(x_train, (x_train.shape[0], x_train.shape[1], x_train.shape[2], channel_num))
-    x_val   = np.reshape(x_val,   (x_val.shape[0],   x_val.shape[1],   x_val.shape[2],   channel_num))
+    #x_train = np.reshape(x_train, (x_train.shape[0], x_train.shape[1], x_train.shape[2], channel_num))
+    #x_val   = np.reshape(x_val,   (x_val.shape[0],   x_val.shape[1],   x_val.shape[2],   channel_num))
     input_shape = (x_train.shape[1], x_train.shape[2], channel_num)
 
-    history = model.fit(x_train, y_train,batch_size=10,epochs=5 ,verbose=1,
+    history = model.fit(x_train, y_train,batch_size=30,epochs=5 ,verbose=1,
                     validation_data=(x_val, y_val),callbacks=[early_stopping])
 
     history_loss += history.history['loss']
@@ -213,8 +158,51 @@ plt.legend(['train', 'test'], loc='upper left')
 plt.savefig('accuracy.jpg')
 #plt.show()
 
+## Read test data from UCI 2014 Train directory
+## Data is the masked gery input file
+
+img_channel_num = 1
+path_to_test_image_dir = "data/uci_dataset_2014_with_RGB_pics/TEST"
+
+# Only read in test data
+test_image_list = None
+test_species_list = []
+for species_name in sorted(os.listdir(path_to_test_image_dir)):
+    print(species_name)
+    for file_name in sorted(os.listdir("/".join([path_to_test_image_dir, species_name]))):
+
+        # Create input images
+        full_path = "/".join([path_to_test_image_dir, species_name, file_name])
+
+        # Fetch original training data
+        im_pil_orig = Image.open(full_path)
+
+        # Put species name into list
+        test_species_list.append(species_name)
+
+        im_np = np.array(im_pil_orig)
+        im_np = np.reshape(im_np, (1, img_channel_num, im_np.shape[0], im_np.shape[1]))
+        test_image_list = helper.cascade_npdata(image_list=test_image_list, np_input=im_np)
+
+print(test_image_list.shape)
+
+## Since the labels are textual, so we encode them categorically
+test_y = LabelEncoder().fit(test_species_list).transform(test_species_list)
+test_y_cat = to_categorical(test_y)
+
+
+## Most of the learning algorithms are prone to feature scaling
+## Standardising the data to give zero mean =)
+test_X = test_image_list.astype(float)
+
+print("Finish read in test data")
+
+# Evaluate model on test data
+score, acc = model.evaluate(test_X, test_y_cat, batch_size=10, verbose=1)
+
+print('Test score:', score)
+print('Test accuracy:', acc)
+
 ## print run time
 end = time.time()
 print(round((end-start),2), "seconds")
-
-
