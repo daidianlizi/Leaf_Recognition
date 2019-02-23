@@ -37,7 +37,8 @@ from keras.callbacks import EarlyStopping
 from util.HelperFunction import helperfunction as helper
 
 X = np.fromfile("trainX.data", dtype=np.uint8)
-X = np.reshape(X,(1410 ,1, 960, 720))
+print(X.shape)
+X = np.reshape(X,(2820 ,1, 480, 360))
 
 train_species_list = pickle.load(open("trainY.data", 'rb'))
 y = LabelEncoder().fit(train_species_list).transform(train_species_list)
@@ -71,12 +72,12 @@ print("input shape: " + str(input_shape))
 
 model = Sequential()
 
-model.add(Convolution2D(16, kernel_size=(7, 7), strides=(3, 3),
+model.add(Convolution2D(16, kernel_size=(5, 5), strides=(3, 3),
                         activation='relu',
                         padding='same',
                         input_shape=input_shape, data_format='channels_first'))
 
-model.add(MaxPooling2D(pool_size=(2, 2), strides=(2, 2),
+model.add(MaxPooling2D(pool_size=(2, 2), strides=(1, 1),
                        dim_ordering="th"))
 model.add(Dropout(0.1))
 
@@ -117,7 +118,7 @@ for _ in range(0,fold_size):
     #x_val   = np.reshape(x_val,   (x_val.shape[0],   x_val.shape[1],   x_val.shape[2],   channel_num))
     input_shape = (x_train.shape[1], x_train.shape[2], channel_num)
 
-    history = model.fit(x_train, y_train,batch_size=10,epochs=8 ,verbose=1,
+    history = model.fit(x_train, y_train,batch_size=30,epochs=8 ,verbose=1,
                     validation_data=(x_val, y_val),callbacks=[early_stopping])
 
     history_loss += history.history['loss']
@@ -126,6 +127,17 @@ for _ in range(0,fold_size):
     history_val_acc += history.history['val_acc']
 
 model.save("Leaf_classification_model.h5")
+
+history = model.fit(X, y_cat,batch_size=50,epochs=10 ,verbose=1,
+                validation_data=(x_val, y_val),callbacks=[early_stopping])
+
+history_loss += history.history['loss']
+history_val_loss += history.history['val_loss']
+history_acc += history.history['acc']
+history_val_acc += history.history['val_acc']
+
+model.save("Leaf_classification_model2.h5")
+
 ## we need to consider the loss for final submission to leaderboard
 ## print(history.history.keys())
 print('val_acc: ',max(history_val_acc))
