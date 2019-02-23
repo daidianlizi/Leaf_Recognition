@@ -56,7 +56,7 @@ def gen_augmented_image_list(plt_input=None):
     img_content = img_orig.copy()
     img_content = img_content.crop(box=[x_min, y_min, x_max, y_max])
 
-    for idx in range(0, 4):
+    for idx in range(0, 10):
         x_index = random.randrange(x_reg_len)
         y_index = random.randrange(y_reg_len)
         assert (x_index < x_reg_len)
@@ -66,7 +66,7 @@ def gen_augmented_image_list(plt_input=None):
         img_displaced = Image.new('L', img_orig.size, color='black')
 
         # paste the content images
-        img_displaced.paste(img_content, box=[x_index, y_index])
+        img_displaced.paste(img_content, (x_index, y_index))
 
         ret_list.append(img_displaced)
 

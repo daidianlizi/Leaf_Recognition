@@ -16,7 +16,7 @@ train_species_list = []
 for species_name in sorted(os.listdir(path_to_train_image_dir)):
 
     if os.path.isdir("/".join([path_to_train_augment_image_dir, species_name])) is not True:
-        os.makedirs("/".join([path_to_train_augment_image_dir, species_name]), exist_ok=True)
+        os.makedirs("/".join([path_to_train_augment_image_dir, species_name]))
 
     for file_name in sorted(os.listdir("/".join([path_to_train_image_dir, species_name]))):
 
@@ -35,9 +35,9 @@ for species_name in sorted(os.listdir(path_to_train_image_dir)):
         id = 0
         file_dst_name = file_original + "_" + str(id) + ".JPG"
         dst_path = "/".join([path_to_train_augment_image_dir, species_name, file_dst_name])
-        print(dst_path)
-        id = id + 1
-        im_pil_orig.save(dst_path)
+        #print(dst_path)
+        #id = id + 1
+        #im_pil_orig.save(dst_path)
 
         # TODO: we have to do data augmentation
         for augmented_img in augmented_img_list:

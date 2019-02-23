@@ -10,10 +10,10 @@ path_to_TRAIN_dir = "data/uci_dataset_2014_with_RGB_pics/TRAIN"
 path_to_TEST_dir = "data/uci_dataset_2014_with_RGB_pics/TEST"
 
 if os.path.isdir(path_to_TRAIN_dir) is not True:
-    os.makedirs(path_to_TRAIN_dir, exist_ok=True)
+    os.makedirs(path_to_TRAIN_dir)
 
 if os.path.isdir(path_to_TEST_dir) is not True:
-    os.makedirs(path_to_TEST_dir, exist_ok=True)
+    os.makedirs(path_to_TEST_dir)
 
 for species_name in os.listdir(path_to_GREY_MASKED_dir):  # assuming gif
 
@@ -31,11 +31,11 @@ for species_name in os.listdir(path_to_GREY_MASKED_dir):  # assuming gif
 
     train_species_dir_path = "/".join([path_to_TRAIN_dir, species_name])
     if os.path.isdir(train_species_dir_path) is not True:
-        os.makedirs(train_species_dir_path, exist_ok=True)
+        os.makedirs(train_species_dir_path)
 
     test_species_dir_path   = "/".join([path_to_TEST_dir, species_name])
     if os.path.isdir(test_species_dir_path) is not True:
-        os.makedirs(test_species_dir_path, exist_ok=True)
+        os.makedirs(test_species_dir_path)
 
     maxsize = (360, 480)
 
@@ -47,6 +47,7 @@ for species_name in os.listdir(path_to_GREY_MASKED_dir):  # assuming gif
         assert(img is not None)
         img.thumbnail(maxsize, Image.ANTIALIAS)
         img.save(dst_train_file_path)
+        print(src_train_file_path + str(img.size))
 
         #copyfile(src_train_file_path, dst_train_file_path)
 
@@ -57,3 +58,4 @@ for species_name in os.listdir(path_to_GREY_MASKED_dir):  # assuming gif
         img = Image.open(src_test_file_path)
         img.thumbnail(maxsize, Image.ANTIALIAS)
         img.save(dst_test_file_path)
+        print(src_test_file_path + str(img.size))
