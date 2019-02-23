@@ -125,6 +125,7 @@ for _ in range(0,fold_size):
     history_acc += history.history['acc']
     history_val_acc += history.history['val_acc']
 
+model.save("Leaf_classification_model.h5")
 ## we need to consider the loss for final submission to leaderboard
 ## print(history.history.keys())
 print('val_acc: ',max(history_val_acc))
