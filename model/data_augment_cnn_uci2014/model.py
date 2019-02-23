@@ -117,7 +117,7 @@ for _ in range(0,fold_size):
     #x_val   = np.reshape(x_val,   (x_val.shape[0],   x_val.shape[1],   x_val.shape[2],   channel_num))
     input_shape = (x_train.shape[1], x_train.shape[2], channel_num)
 
-    history = model.fit(x_train, y_train,batch_size=20,epochs=5 ,verbose=1,
+    history = model.fit(x_train, y_train,batch_size=10,epochs=8 ,verbose=1,
                     validation_data=(x_val, y_val),callbacks=[early_stopping])
 
     history_loss += history.history['loss']
@@ -125,6 +125,7 @@ for _ in range(0,fold_size):
     history_acc += history.history['acc']
     history_val_acc += history.history['val_acc']
 
+model.save("Leaf_classification_model.h5")
 ## we need to consider the loss for final submission to leaderboard
 ## print(history.history.keys())
 print('val_acc: ',max(history_val_acc))
