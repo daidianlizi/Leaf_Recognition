@@ -3,6 +3,8 @@ import os
 os.environ['KMP_DUPLICATE_LIB_OK']='True'
 import glob
 
+import pickle
+
 
 ## Measure execution time, becaus Kaggle cloud fluctuates
 
@@ -37,6 +39,7 @@ from keras.callbacks import EarlyStopping
 
 
 ## Read data from UCI 2014 BW image files
+output_file_prefix = "GREY"
 path_to_image_dir = "data/uci_dataset_2014_with_RGB_pics/GREY"
 
 image_list = None
@@ -170,6 +173,12 @@ print('train_loss: ',min(history_loss))
 
 print()
 print("train/val loss ratio: ", min(history_loss)/min(history_val_loss))
+
+with open(output_file_prefix + ".train_acc.log", "wb") as fp:
+    pickle.dump(max(history_acc), fp)
+
+with open(output_file_prefix + ".val_acc.log", "wb") as fp:
+    pickle.dump(max(history_val_acc), fp)
 
 ## summarize history for loss
 ## Plotting the loss with the number of iterations
