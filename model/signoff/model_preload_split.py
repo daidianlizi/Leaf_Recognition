@@ -56,6 +56,8 @@ for i in range(X.shape[0]):
     #scalers[i] = MinMaxScaler(feature_range=(-1,1))
     X[i, :, :] = scalers[i].fit_transform(X[i, :, :])
 
+X = np.reshape(X,(total_num, 960, 720, 1))
+
 ## We will be working with categorical crossentropy function
 ## It is required to further convert the labels into "one-hot" representation
 y_cat = to_categorical(y)
@@ -88,6 +90,7 @@ for i in range(test_X.shape[0]):
     scalers[i] = MinMaxScaler()
     #scalers[i] = MinMaxScaler(feature_range=(-1,1))
     test_X[i, :, :] = scalers[i].fit_transform(test_X[i, :, :])
+test_X = np.reshape(test_X,(test_X.shape[0], test_X.shape[1], test_X.shape[2], 1))
 
 print(test_image_list.shape)
 
@@ -105,7 +108,7 @@ sss_iter = iter(sss.split(X, y))
 
 # Generate input shape
 channel_num = 1
-input_shape = (X.shape[1], X.shape[2], channel_num)
+input_shape = (X.shape[1], X.shape[2], 1)
 print("input shape: " + str(input_shape))
 
 ## Developing a layered model for Neural Networks
@@ -115,7 +118,7 @@ print("input shape: " + str(input_shape))
 
 model = Sequential()
 
-model.add(Convolution2D(16, kernel_size=(11, 11), strides=(10, 10),
+model.add(Convolution2D(16, kernel_size=(21, 21), strides=(20, 20),
                         activation='relu',
                         padding='same',
                         input_shape=input_shape))
