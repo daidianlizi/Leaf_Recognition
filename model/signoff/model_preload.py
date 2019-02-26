@@ -38,7 +38,8 @@ from util.HelperFunction import helperfunction as helper
 
 X = np.fromfile("trainX.data", dtype=np.uint8)
 print(X.shape)
-X = np.reshape(X,(2820 ,1, 480, 360))
+return
+X = np.reshape(X,(2820 ,960, 480, 1))
 
 train_species_list = pickle.load(open("trainY.data", 'rb'))
 y = LabelEncoder().fit(train_species_list).transform(train_species_list)
@@ -46,10 +47,10 @@ y = LabelEncoder().fit(train_species_list).transform(train_species_list)
 #X = MinMaxScaler().fit(X).transform(X)
 #TODO: masked out scaler
 #scalers = {}
-#for i in range(X.shape[0]):
-#    scalers[i] = MinMaxScaler()
-#    #scalers[i] = MinMaxScaler(feature_range=(-1,1))
-#    X[i, :, :] = scalers[i].fit_transform(X[i, :, :])
+for i in range(X.shape[0]):
+    scalers[i] = MinMaxScaler()
+    #scalers[i] = MinMaxScaler(feature_range=(-1,1))
+    X[i, :, :] = scalers[i].fit_transform(X[i, :, :])
 
 ## We will be working with categorical crossentropy function
 ## It is required to further convert the labels into "one-hot" representation
@@ -75,17 +76,17 @@ model = Sequential()
 model.add(Convolution2D(16, kernel_size=(11, 11), strides=(10, 10),
                         activation='relu',
                         padding='same',
-                        input_shape=input_shape, data_format='channels_first'))
+                        input_shape=input_shape))
 
 model.add(MaxPooling2D(pool_size=(2, 2), strides=(2, 2),
                        dim_ordering="th"))
 model.add(Dropout(0.1))
 
-model.add(Convolution2D(32, (3, 3), activation='relu', data_format='channels_first'))
+model.add(Convolution2D(32, (3, 3), activation='relu'))
 model.add(MaxPooling2D(pool_size=(2, 2), strides=(2, 2), dim_ordering="th"))
 model.add(Dropout(0.2))
 
-model.add(Convolution2D(64, (3, 3), activation='relu', data_format='channels_first'))
+model.add(Convolution2D(64, (3, 3), activation='relu'))
 model.add(MaxPooling2D(pool_size=(2, 2), strides=(2, 2), dim_ordering="th"))
 model.add(Dropout(0.3))
 
@@ -108,110 +109,67 @@ history_val_loss = []
 history_acc = []
 history_val_acc = []
 
-#for _ in range(0,fold_size):
-#    train_index, val_index = next(sss_iter)
-#    x_train, x_val = X[train_index], X[val_index]
-#    y_train, y_val = y_cat[train_index], y_cat[val_index]
-#
-#    channel_num = 1
-#    #x_train = np.reshape(x_train, (x_train.shape[0], x_train.shape[1], x_train.shape[2], channel_num))
-#    #x_val   = np.reshape(x_val,   (x_val.shape[0],   x_val.shape[1],   x_val.shape[2],   channel_num))
-#    input_shape = (x_train.shape[1], x_train.shape[2], channel_num)
-#
-#    history = model.fit(x_train, y_train,batch_size=30,epochs=8 ,verbose=1,
-#                    validation_data=(x_val, y_val),callbacks=[early_stopping])
-#
-#    history_loss += history.history['loss']
-#    history_val_loss += history.history['val_loss']
-#    history_acc += history.history['acc']
-#    history_val_acc += history.history['val_acc']
+model.save("Leaf_classification_model_"+output_file_prefix+".h5")
 
-history = model.fit(X, y_cat, batch_size=60, epochs=25 ,verbose=1)
+train_index, val_index = next(sss_iter)
+x_train, x_val = X[train_index], X[val_index]
+y_train, y_val = y_cat[train_index], y_cat[val_index]
+
+channel_num = 1
+x_train = np.reshape(x_train, (x_train.shape[0], x_train.shape[1], x_train.shape[2], channel_num))
+x_val   = np.reshape(x_val,   (x_val.shape[0],   x_val.shape[1],   x_val.shape[2],   channel_num))
+input_shape = (x_train.shape[1], x_train.shape[2], channel_num)
+
+history = model.fit(x_train, y_train,batch_size=60,epochs=80 ,verbose=1,
+                validation_data=(x_val, y_val),callbacks=[early_stopping])
 
 history_loss += history.history['loss']
-#history_val_loss += history.history['val_loss']
+history_val_loss += history.history['val_loss']
 history_acc += history.history['acc']
-#history_val_acc += history.history['val_acc']
-model.save("Leaf_classification_model.h5")
-
+history_val_acc += history.history['val_acc']
+    
+    
 ## we need to consider the loss for final submission to leaderboard
 ## print(history.history.keys())
-#print('val_acc: ',max(history_val_acc))
-#print('val_loss: ',min(history_val_loss))
+print('val_acc: ',max(history_val_acc))
+print('val_loss: ',min(history_val_loss))
 print('train_acc: ',max(history_acc))
 print('train_loss: ',min(history_loss))
 
 print()
-#print("train/val loss ratio: ", min(history_loss)/min(history_val_loss))
-
-### summarize history for loss
-### Plotting the loss with the number of iterations
-#plt.semilogy(history_loss)
-##plt.semilogy(history_val_loss)
-#plt.title('model loss')
-#plt.ylabel('loss')
-#plt.xlabel('epoch')
-#plt.legend(['train'], loc='upper left')
-#plt.savefig('loss.jpg')
-##plt.show()
-#
-### Plotting the error with the number of iterations
-### With each iteration the error reduces smoothly
-#plt.clf()
-#plt.plot(history_acc)
-##plt.plot(history_val_acc)
-#plt.title('model accuracy')
-#plt.ylabel('accuracy')
-#plt.xlabel('epoch')
-#plt.legend(['train'], loc='upper left')
-#plt.savefig('accuracy.jpg')
-##plt.show()
-
-## Read test data from UCI 2014 Train directory
-## Data is the masked gery input file
-
-img_channel_num = 1
-path_to_test_image_dir = "data/uci_dataset_2014_with_RGB_pics/TEST"
-
-# Only read in test data
-test_image_list = None
-test_species_list = []
-for species_name in sorted(os.listdir(path_to_test_image_dir)):
-    print(species_name)
-    for file_name in sorted(os.listdir("/".join([path_to_test_image_dir, species_name]))):
-
-        # Create input images
-        full_path = "/".join([path_to_test_image_dir, species_name, file_name])
-
-        # Fetch original training data
-        im_pil_orig = Image.open(full_path)
-
-        # Put species name into list
-        test_species_list.append(species_name)
-
-        im_np = np.array(im_pil_orig)
-        im_np = np.reshape(im_np, (1, img_channel_num, im_np.shape[0], im_np.shape[1]))
-        test_image_list = helper.cascade_npdata(image_list=test_image_list, np_input=im_np)
-
-print(test_image_list.shape)
-
-## Since the labels are textual, so we encode them categorically
-test_y = LabelEncoder().fit(test_species_list).transform(test_species_list)
-test_y_cat = to_categorical(test_y)
+print("train/val loss ratio: ", min(history_loss)/min(history_val_loss))
 
 
-## Most of the learning algorithms are prone to feature scaling
-## Standardising the data to give zero mean =)
-test_X = test_image_list.astype(float)
+with open(output_file_prefix + ".train_acc.log", "wb") as fp:
+    print("dump train accuracy into: " + output_file_prefix + ".train_acc.log")
+    pickle.dump(history_acc, fp)
 
-print("Finish read in test data")
+with open(output_file_prefix + ".val_acc.log", "wb") as fp:
+    print("dump val accuracy into: " + output_file_prefix + ".val_acc.log")
+    pickle.dump(history_val_acc, fp)
 
-# Evaluate model on test data
-score, acc = model.evaluate(test_X, test_y_cat, batch_size=10, verbose=1)
+## summarize history for loss
+## Plotting the loss with the number of iterations
+plt.semilogy(history_loss)
+plt.semilogy(history_val_loss)
+plt.title('model loss')
+plt.ylabel('loss')
+plt.xlabel('epoch')
+plt.legend(['train', 'test'], loc='upper left')
+plt.show()
 
-print('Test score:', score)
-print('Test accuracy:', acc)
+## Plotting the error with the number of iterations
+## With each iteration the error reduces smoothly
+plt.plot(history_acc)
+plt.plot(history_val_acc)
+plt.title('model accuracy')
+plt.ylabel('accuracy')
+plt.xlabel('epoch')
+plt.legend(['train', 'test'], loc='upper left')
+plt.show()
 
 ## print run time
 end = time.time()
 print(round((end-start),2), "seconds")
+
+
