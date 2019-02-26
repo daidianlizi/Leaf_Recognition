@@ -8,11 +8,15 @@ from util.HelperFunction import helperfunction as helper
 
 img_channel_num = 1
 
-path_to_train_image_dir = "data/uci_dataset_2014_with_RGB_pics/TRAIN/"
-path_to_train_augment_image_dir = "data/uci_dataset_2014_with_RGB_pics/TRAIN_AUGMENT"
+path_to_train_image_dir = "data/uci_dataset_2014_with_RGB_pics/GREY_MASKED"
+path_to_train_augment_image_dir = "data/uci_dataset_2014_with_RGB_pics/GREY_MASKED_AUGMENT"
 
 train_image_list = None
 train_species_list = []
+
+if os.path.isdir(path_to_train_image_dir) is not True:
+    os.makedirs(path_to_train_augment_image_dir)
+
 for species_name in sorted(os.listdir(path_to_train_image_dir)):
 
     if os.path.isdir("/".join([path_to_train_augment_image_dir, species_name])) is not True:
