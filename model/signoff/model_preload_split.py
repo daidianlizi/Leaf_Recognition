@@ -123,16 +123,15 @@ model.add(Convolution2D(16, kernel_size=(21, 21), strides=(20, 20),
                         padding='same',
                         input_shape=input_shape))
 
-model.add(MaxPooling2D(pool_size=(2, 2), strides=(2, 2),
-                       dim_ordering="th"))
+model.add(MaxPooling2D(pool_size=(2, 2), strides=(2, 2)))
 model.add(Dropout(0.1))
 
 model.add(Convolution2D(32, (3, 3), activation='relu'))
-model.add(MaxPooling2D(pool_size=(2, 2), strides=(2, 2), dim_ordering="th"))
+model.add(MaxPooling2D(pool_size=(2, 2), strides=(2, 2)))
 model.add(Dropout(0.2))
 
 model.add(Convolution2D(64, (3, 3), activation='relu'))
-model.add(MaxPooling2D(pool_size=(2, 2), strides=(2, 2), dim_ordering="th"))
+model.add(MaxPooling2D(pool_size=(2, 2), strides=(2, 2)))
 model.add(Dropout(0.3))
 
 
