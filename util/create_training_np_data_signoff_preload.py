@@ -9,7 +9,7 @@ from util.HelperFunction import helperfunction as helper
 img_channel_num = 1
 
 
-path_to_train_augment_image_dir = "data/uci_dataset_2014_with_RGB_pics/BW"
+path_to_train_augment_image_dir = "data/uci_dataset_2014_with_RGB_pics/GREY_MASKED_AUGMENT"
 
 train_image_list = None
 train_species_list = []
@@ -22,13 +22,13 @@ for species_name in sorted(os.listdir(path_to_train_augment_image_dir)):
 
         print(full_path)
         # Fetch original training data
-        im_pil_orig = Image.open(full_path).convert('1')
+        im_pil_orig = Image.open(full_path).convert('L')
 
         
         im_np = np.array(im_pil_orig)
 
 
-        im_np = np.reshape(im_np, (1, img_channel_num, im_np.shape[0], im_np.shape[1]))
+        im_np = np.reshape(im_np, (1, im_np.shape[0], im_np.shape[1], img_channel_num))
         print(full_path +" " + str(im_np.shape))
 
         train_image_list = helper.cascade_npdata(image_list=train_image_list, np_input=im_np)
