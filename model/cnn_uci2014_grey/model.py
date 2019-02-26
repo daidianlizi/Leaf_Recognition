@@ -174,11 +174,11 @@ print("train/val loss ratio: ", min(history_loss)/min(history_val_loss))
 
 with open(output_file_prefix + ".train_acc.log", "wb") as fp:
     print("dump train accuracy into: " + output_file_prefix + ".train_acc.log")
-    pickle.dump(max(history_acc), fp)
+    pickle.dump(history_acc, fp)
 
 with open(output_file_prefix + ".val_acc.log", "wb") as fp:
     print("dump val accuracy into: " + output_file_prefix + ".val_acc.log")
-    pickle.dump(max(history_val_acc), fp)
+    pickle.dump(history_val_acc, fp)
 
 ## summarize history for loss
 ## Plotting the loss with the number of iterations
