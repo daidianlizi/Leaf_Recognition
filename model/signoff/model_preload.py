@@ -36,17 +36,21 @@ from keras.callbacks import EarlyStopping
 
 from util.HelperFunction import helperfunction as helper
 
+## Read data from UCI 2014 BW image files
+output_file_prefix="GREY_MASKED_AUGMENT"
+
 X = np.fromfile("trainX.data", dtype=np.uint8)
 print(X.shape)
-return
-X = np.reshape(X,(2820 ,960, 480, 1))
+total_num = int(X.shape[0]) / (960*720)
+X = np.reshape(X,(total_num, 960, 720))
 
 train_species_list = pickle.load(open("trainY.data", 'rb'))
 y = LabelEncoder().fit(train_species_list).transform(train_species_list)
 
 #X = MinMaxScaler().fit(X).transform(X)
 #TODO: masked out scaler
-#scalers = {}
+X = X.astype(float)
+scalers = {}
 for i in range(X.shape[0]):
     scalers[i] = MinMaxScaler()
     #scalers[i] = MinMaxScaler(feature_range=(-1,1))
@@ -63,7 +67,8 @@ sss = StratifiedShuffleSplit(n_splits=fold_size, test_size=0.2,random_state=1234
 sss_iter = iter(sss.split(X, y))
 
 # Generate input shape
-input_shape = (X.shape[1], X.shape[2], X.shape[3])
+channel_num = 1
+input_shape = (X.shape[1], X.shape[2], channel_num)
 print("input shape: " + str(input_shape))
 
 ## Developing a layered model for Neural Networks
