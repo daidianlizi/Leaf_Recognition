@@ -61,6 +61,43 @@ for i in range(X.shape[0]):
 y_cat = to_categorical(y)
 print(y_cat.shape)
 
+# Only read in test data
+path_to_test_image_dir = "data/uci_dataset_2014_with_RGB_pics/TEST"
+test_image_list = None
+test_species_list = []
+for species_name in sorted(os.listdir(path_to_test_image_dir)):
+    print(species_name)
+    for file_name in sorted(os.listdir("/".join([path_to_test_image_dir, species_name]))):
+
+        # Create input images
+        full_path = "/".join([path_to_test_image_dir, species_name, file_name])
+
+        # Fetch original training data
+        im_pil_orig = Image.open(full_path)
+
+        # Put species name into list
+        test_species_list.append(species_name)
+
+        im_np = np.array(im_pil_orig)
+        im_np = np.reshape(im_np, (1, im_np.shape[0], im_np.shape[1]))
+        test_image_list = helper.cascade_npdata(image_list=test_image_list, np_input=im_np)
+
+test_X = test_image_list.astype(float)
+scalers = {}
+for i in range(test_X.shape[0]):
+    scalers[i] = MinMaxScaler()
+    #scalers[i] = MinMaxScaler(feature_range=(-1,1))
+    test_X[i, :, :] = scalers[i].fit_transform(test_X[i, :, :])
+
+print(test_image_list.shape)
+
+## Since the labels are textual, so we encode them categorically
+test_y = LabelEncoder().fit(test_species_list).transform(test_species_list)
+test_y_cat = to_categorical(test_y)
+
+
+## Most of the learning algorithms are prone to feature scaling
+## Standardising the data to give zero mean =)
 fold_size = 5
 ## retain class balances
 sss = StratifiedShuffleSplit(n_splits=fold_size, test_size=0.2,random_state=12345)
@@ -125,8 +162,8 @@ x_train = np.reshape(x_train, (x_train.shape[0], x_train.shape[1], x_train.shape
 x_val   = np.reshape(x_val,   (x_val.shape[0],   x_val.shape[1],   x_val.shape[2],   channel_num))
 input_shape = (x_train.shape[1], x_train.shape[2], channel_num)
 
-history = model.fit(x_train, y_train,batch_size=60,epochs=80 ,verbose=1,
-                validation_data=(x_val, y_val),callbacks=[early_stopping])
+history = model.fit(X, y_cat, batch_size=60,epochs=80 ,verbose=1,
+                validation_data=(test_X, test_y_cat),callbacks=[early_stopping])
 
 history_loss += history.history['loss']
 history_val_loss += history.history['val_loss']
