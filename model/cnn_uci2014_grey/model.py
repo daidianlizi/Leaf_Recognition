@@ -2,7 +2,7 @@
 import os
 os.environ['KMP_DUPLICATE_LIB_OK']='True'
 import glob
-
+import pickle
 
 ## Measure execution time, becaus Kaggle cloud fluctuates  
 
@@ -37,7 +37,8 @@ from keras.callbacks import EarlyStopping
 
 
 ## Read data from UCI 2014 BW image files
-path_to_image_dir = "data/uci_dataset_2014_with_RGB_pics/GREY"
+output_file_prefix="GREY_NON_MASKED_30species"
+path_to_image_dir = "data/uci_dataset_2014_with_RGB_pics/" + output_file_prefix
 
 image_list = None
 species_list = []
@@ -107,7 +108,7 @@ print("input shape: " + str(input_shape))
 
 model = Sequential()
 
-model.add(Convolution2D(8, kernel_size=(7, 7), strides=(2, 2),
+model.add(Convolution2D(16, kernel_size=(21, 21), strides=(20, 20),
                         activation='relu',
                         padding='same',
                         input_shape=input_shape))
@@ -115,18 +116,18 @@ model.add(Convolution2D(8, kernel_size=(7, 7), strides=(2, 2),
 model.add(MaxPooling2D(pool_size=(2, 2), strides=(2, 2)))
 model.add(Dropout(0.1))
 
-model.add(Convolution2D(16, (3, 3), activation='relu'))
+model.add(Convolution2D(32, (3, 3), activation='relu'))
 model.add(MaxPooling2D(pool_size=(2, 2), strides=(2, 2)))
 model.add(Dropout(0.2))
 
-model.add(Convolution2D(32, (3, 3), activation='relu'))
+model.add(Convolution2D(64, (3, 3), activation='relu'))
 model.add(MaxPooling2D(pool_size=(2, 2), strides=(2, 2)))
 model.add(Dropout(0.3))
 
 
 model.add(Flatten())
 model.add(Dense(300, activation='relu'))
-model.add(Dense(40, activation='softmax'))
+model.add(Dense(30, activation='softmax'))
 
 ## Error is measured as categorical crossentropy or multiclass logloss
 ## Adagrad, rmsprop, SGD, Adadelta, Adam, Adamax, Nadam
@@ -142,23 +143,22 @@ history_val_loss = []
 history_acc = []
 history_val_acc = []
 
-for _ in range(0,5):
-    train_index, val_index = next(sss_iter)
-    x_train, x_val = X[train_index], X[val_index]
-    y_train, y_val = y_cat[train_index], y_cat[val_index]
+train_index, val_index = next(sss_iter)
+x_train, x_val = X[train_index], X[val_index]
+y_train, y_val = y_cat[train_index], y_cat[val_index]
 
-    channel_num = 1
-    x_train = np.reshape(x_train, (x_train.shape[0], x_train.shape[1], x_train.shape[2], channel_num))
-    x_val   = np.reshape(x_val,   (x_val.shape[0],   x_val.shape[1],   x_val.shape[2],   channel_num))
-    input_shape = (x_train.shape[1], x_train.shape[2], channel_num)
-    
-    history = model.fit(x_train, y_train,batch_size=10,epochs=5 ,verbose=1,
-                    validation_data=(x_val, y_val),callbacks=[early_stopping])
-    
-    history_loss += history.history['loss']
-    history_val_loss += history.history['val_loss']
-    history_acc += history.history['acc']
-    history_val_acc += history.history['val_acc']
+channel_num = 1
+x_train = np.reshape(x_train, (x_train.shape[0], x_train.shape[1], x_train.shape[2], channel_num))
+x_val   = np.reshape(x_val,   (x_val.shape[0],   x_val.shape[1],   x_val.shape[2],   channel_num))
+input_shape = (x_train.shape[1], x_train.shape[2], channel_num)
+
+history = model.fit(x_train, y_train,batch_size=60,epochs=80 ,verbose=1,
+                validation_data=(x_val, y_val),callbacks=[early_stopping])
+
+history_loss += history.history['loss']
+history_val_loss += history.history['val_loss']
+history_acc += history.history['acc']
+history_val_acc += history.history['val_acc']
     
     
 ## we need to consider the loss for final submission to leaderboard
@@ -170,6 +170,15 @@ print('train_loss: ',min(history_loss))
 
 print()
 print("train/val loss ratio: ", min(history_loss)/min(history_val_loss))
+
+
+with open(output_file_prefix + ".train_acc.log", "wb") as fp:
+    print("dump train accuracy into: " + output_file_prefix + ".train_acc.log")
+    pickle.dump(max(history_acc), fp)
+
+with open(output_file_prefix + ".val_acc.log", "wb") as fp:
+    print("dump val accuracy into: " + output_file_prefix + ".val_acc.log")
+    pickle.dump(max(history_val_acc), fp)
 
 ## summarize history for loss
 ## Plotting the loss with the number of iterations
