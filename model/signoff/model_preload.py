@@ -4,7 +4,7 @@ os.environ['KMP_DUPLICATE_LIB_OK']='True'
 import glob
 import pickle
 
-## Measure execution time, becaus Kaggle cloud fluctuates  
+## Measure execution time, becaus Kaggle cloud fluctuates
 
 import time
 start = time.time()
@@ -34,66 +34,36 @@ from keras.layers import Convolution2D, MaxPooling2D
 from keras.utils.np_utils import to_categorical
 from keras.callbacks import EarlyStopping
 
-
+from util.HelperFunction import helperfunction as helper
 
 ## Read data from UCI 2014 BW image files
-output_file_prefix="GREY_NON_MASKED_30species"
-path_to_image_dir = "data/uci_dataset_2014_with_RGB_pics/" + output_file_prefix
+output_file_prefix="GREY_MASKED_AUGMENT"
 
-image_list = None
-species_list = []
-for species_name in sorted(os.listdir(path_to_image_dir)): #assuming gif
-    print(species_name)
-    for file_name in sorted(os.listdir("/".join([path_to_image_dir, species_name]))):
-        # Put species name into list
-        species_list.append(species_name)
-        
-        # Create input images
-        full_path = "/".join([path_to_image_dir, species_name, file_name])
-        im_np = np.array(Image.open(full_path))
-        im_np = np.reshape(im_np, (1, im_np.shape[0], im_np.shape[1]))
-        if image_list is None:
-            image_list = im_np.copy()
-        else:
-            try:
-                image_list = np.concatenate((image_list, im_np))
-            except ValueError as e:
-                print(str(e))
-            
-print(image_list.shape)
+X = np.fromfile("trainX.data", dtype=np.uint8)
+print(X.shape)
+total_num = int(X.shape[0]) / (960*720)
+X = np.reshape(X,(total_num, 960, 720))
 
-## Since the labels are textual, so we encode them categorically
-y = LabelEncoder().fit(species_list).transform(species_list)
-print(y.shape)
-
-
-## Most of the learning algorithms are prone to feature scaling
-## Standardising the data to give zero mean =)
-X = image_list.astype(float)
-
+train_species_list = pickle.load(open("trainY.data", 'rb'))
+y = LabelEncoder().fit(train_species_list).transform(train_species_list)
 
 #X = MinMaxScaler().fit(X).transform(X)
+#TODO: masked out scaler
+X = X.astype(float)
 scalers = {}
 for i in range(X.shape[0]):
     scalers[i] = MinMaxScaler()
     #scalers[i] = MinMaxScaler(feature_range=(-1,1))
-    X[i, :, :] = scalers[i].fit_transform(X[i, :, :]) 
-
-
-#X = image_list
-
-print(X.shape)
-#print(X)
-
+    X[i, :, :] = scalers[i].fit_transform(X[i, :, :])
 
 ## We will be working with categorical crossentropy function
 ## It is required to further convert the labels into "one-hot" representation
-from keras import utils as np_utils
 y_cat = to_categorical(y)
 print(y_cat.shape)
 
+fold_size = 5
 ## retain class balances
-sss = StratifiedShuffleSplit(n_splits=5, test_size=0.2,random_state=12345)
+sss = StratifiedShuffleSplit(n_splits=fold_size, test_size=0.2,random_state=12345)
 sss_iter = iter(sss.split(X, y))
 
 # Generate input shape
@@ -108,20 +78,21 @@ print("input shape: " + str(input_shape))
 
 model = Sequential()
 
-model.add(Convolution2D(16, kernel_size=(21, 21), strides=(20, 20),
+model.add(Convolution2D(16, kernel_size=(11, 11), strides=(10, 10),
                         activation='relu',
                         padding='same',
                         input_shape=input_shape))
 
-model.add(MaxPooling2D(pool_size=(2, 2), strides=(2, 2)))
+model.add(MaxPooling2D(pool_size=(2, 2), strides=(2, 2),
+                       dim_ordering="th"))
 model.add(Dropout(0.1))
 
 model.add(Convolution2D(32, (3, 3), activation='relu'))
-model.add(MaxPooling2D(pool_size=(2, 2), strides=(2, 2)))
+model.add(MaxPooling2D(pool_size=(2, 2), strides=(2, 2), dim_ordering="th"))
 model.add(Dropout(0.2))
 
 model.add(Convolution2D(64, (3, 3), activation='relu'))
-model.add(MaxPooling2D(pool_size=(2, 2), strides=(2, 2)))
+model.add(MaxPooling2D(pool_size=(2, 2), strides=(2, 2), dim_ordering="th"))
 model.add(Dropout(0.3))
 
 
@@ -142,6 +113,8 @@ history_loss = []
 history_val_loss = []
 history_acc = []
 history_val_acc = []
+
+model.save("Leaf_classification_model_"+output_file_prefix+".h5")
 
 train_index, val_index = next(sss_iter)
 x_train, x_val = X[train_index], X[val_index]

@@ -4,7 +4,7 @@ os.environ['KMP_DUPLICATE_LIB_OK']='True'
 import glob
 import pickle
 
-## Measure execution time, becaus Kaggle cloud fluctuates  
+## Measure execution time, becaus Kaggle cloud fluctuates
 
 import time
 start = time.time()
@@ -34,71 +34,81 @@ from keras.layers import Convolution2D, MaxPooling2D
 from keras.utils.np_utils import to_categorical
 from keras.callbacks import EarlyStopping
 
-
+from util.HelperFunction import helperfunction as helper
 
 ## Read data from UCI 2014 BW image files
-output_file_prefix="GREY_NON_MASKED_30species"
-path_to_image_dir = "data/uci_dataset_2014_with_RGB_pics/" + output_file_prefix
+output_file_prefix="GREY_MASKED_AUGMENT"
 
-image_list = None
-species_list = []
-for species_name in sorted(os.listdir(path_to_image_dir)): #assuming gif
-    print(species_name)
-    for file_name in sorted(os.listdir("/".join([path_to_image_dir, species_name]))):
-        # Put species name into list
-        species_list.append(species_name)
-        
-        # Create input images
-        full_path = "/".join([path_to_image_dir, species_name, file_name])
-        im_np = np.array(Image.open(full_path))
-        im_np = np.reshape(im_np, (1, im_np.shape[0], im_np.shape[1]))
-        if image_list is None:
-            image_list = im_np.copy()
-        else:
-            try:
-                image_list = np.concatenate((image_list, im_np))
-            except ValueError as e:
-                print(str(e))
-            
-print(image_list.shape)
+X = np.fromfile("trainX.data", dtype=np.uint8)
+print(X.shape)
+total_num = int(X.shape[0]) / (960*720)
+X = np.reshape(X,(total_num, 960, 720))
 
-## Since the labels are textual, so we encode them categorically
-y = LabelEncoder().fit(species_list).transform(species_list)
-print(y.shape)
-
-
-## Most of the learning algorithms are prone to feature scaling
-## Standardising the data to give zero mean =)
-X = image_list.astype(float)
-
+train_species_list = pickle.load(open("trainY.data", 'rb'))
+y = LabelEncoder().fit(train_species_list).transform(train_species_list)
 
 #X = MinMaxScaler().fit(X).transform(X)
+#TODO: masked out scaler
+X = X.astype(float)
 scalers = {}
 for i in range(X.shape[0]):
     scalers[i] = MinMaxScaler()
     #scalers[i] = MinMaxScaler(feature_range=(-1,1))
-    X[i, :, :] = scalers[i].fit_transform(X[i, :, :]) 
+    X[i, :, :] = scalers[i].fit_transform(X[i, :, :])
 
-
-#X = image_list
-
-print(X.shape)
-#print(X)
-
+X = np.reshape(X,(total_num, 960, 720, 1))
 
 ## We will be working with categorical crossentropy function
 ## It is required to further convert the labels into "one-hot" representation
-from keras import utils as np_utils
 y_cat = to_categorical(y)
 print(y_cat.shape)
 
+# Only read in test data
+path_to_test_image_dir = "data/uci_dataset_2014_with_RGB_pics/TEST"
+test_image_list = None
+test_species_list = []
+for species_name in sorted(os.listdir(path_to_test_image_dir)):
+    print(species_name)
+    for file_name in sorted(os.listdir("/".join([path_to_test_image_dir, species_name]))):
+
+        # Create input images
+        full_path = "/".join([path_to_test_image_dir, species_name, file_name])
+
+        # Fetch original training data
+        im_pil_orig = Image.open(full_path)
+
+        # Put species name into list
+        test_species_list.append(species_name)
+
+        im_np = np.array(im_pil_orig)
+        im_np = np.reshape(im_np, (1, im_np.shape[0], im_np.shape[1]))
+        test_image_list = helper.cascade_npdata(image_list=test_image_list, np_input=im_np)
+
+test_X = test_image_list.astype(float)
+scalers = {}
+for i in range(test_X.shape[0]):
+    scalers[i] = MinMaxScaler()
+    #scalers[i] = MinMaxScaler(feature_range=(-1,1))
+    test_X[i, :, :] = scalers[i].fit_transform(test_X[i, :, :])
+test_X = np.reshape(test_X,(test_X.shape[0], test_X.shape[1], test_X.shape[2], 1))
+
+print(test_image_list.shape)
+
+## Since the labels are textual, so we encode them categorically
+test_y = LabelEncoder().fit(test_species_list).transform(test_species_list)
+test_y_cat = to_categorical(test_y)
+
+
+## Most of the learning algorithms are prone to feature scaling
+## Standardising the data to give zero mean =)
+fold_size = 5
 ## retain class balances
-sss = StratifiedShuffleSplit(n_splits=5, test_size=0.2,random_state=12345)
+sss = StratifiedShuffleSplit(n_splits=fold_size, test_size=0.2,random_state=12345)
 sss_iter = iter(sss.split(X, y))
 
 # Generate input shape
 channel_num = 1
-input_shape = (X.shape[1], X.shape[2], channel_num)
+input_shape = (X.shape[1], X.shape[2], 1)
 print("input shape: " + str(input_shape))
 
 ## Developing a layered model for Neural Networks
@@ -143,6 +153,8 @@ history_val_loss = []
 history_acc = []
 history_val_acc = []
 
+model.save("Leaf_classification_model_"+output_file_prefix+".h5")
+
 train_index, val_index = next(sss_iter)
 x_train, x_val = X[train_index], X[val_index]
 y_train, y_val = y_cat[train_index], y_cat[val_index]
@@ -152,8 +164,8 @@ x_train = np.reshape(x_train, (x_train.shape[0], x_train.shape[1], x_train.shape
 x_val   = np.reshape(x_val,   (x_val.shape[0],   x_val.shape[1],   x_val.shape[2],   channel_num))
 input_shape = (x_train.shape[1], x_train.shape[2], channel_num)
 
-history = model.fit(x_train, y_train,batch_size=60,epochs=80 ,verbose=1,
-                validation_data=(x_val, y_val),callbacks=[early_stopping])
+history = model.fit(X, y_cat, batch_size=60,epochs=80 ,verbose=1,
+                validation_data=(test_X, test_y_cat),callbacks=[early_stopping])
 
 history_loss += history.history['loss']
 history_val_loss += history.history['val_loss']

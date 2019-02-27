@@ -37,7 +37,7 @@ from keras.callbacks import EarlyStopping
 
 
 ## Read data from UCI 2014 BW image files
-output_file_prefix="GREY_NON_MASKED_30species"
+output_file_prefix="TRAIN_AUGMENT"
 path_to_image_dir = "data/uci_dataset_2014_with_RGB_pics/" + output_file_prefix
 
 image_list = None
@@ -60,6 +60,29 @@ for species_name in sorted(os.listdir(path_to_image_dir)): #assuming gif
             except ValueError as e:
                 print(str(e))
             
+output_file_prefix="TEST_AUGMENT"
+path_to_image_dir = "data/uci_dataset_2014_with_RGB_pics/" + output_file_prefix
+
+for species_name in sorted(os.listdir(path_to_image_dir)): #assuming gif
+    print(species_name)
+    for file_name in sorted(os.listdir("/".join([path_to_image_dir, species_name]))):
+        # Put species name into list
+        species_list.append(species_name)
+        
+        # Create input images
+        full_path = "/".join([path_to_image_dir, species_name, file_name])
+        im_np = np.array(Image.open(full_path))
+        im_np = np.reshape(im_np, (1, im_np.shape[0], im_np.shape[1]))
+        if image_list is None:
+            image_list = im_np.copy()
+        else:
+            try:
+                image_list = np.concatenate((image_list, im_np))
+            except ValueError as e:
+                print(str(e))
+
+output_file_prefix="MASK_GREY_AUMENT"
+
 print(image_list.shape)
 
 ## Since the labels are textual, so we encode them categorically
@@ -182,23 +205,23 @@ with open(output_file_prefix + ".val_acc.log", "wb") as fp:
 
 ## summarize history for loss
 ## Plotting the loss with the number of iterations
-plt.semilogy(history_loss)
-plt.semilogy(history_val_loss)
-plt.title('model loss')
-plt.ylabel('loss')
-plt.xlabel('epoch')
-plt.legend(['train', 'test'], loc='upper left')
-plt.show()
+#plt.semilogy(history_loss)
+#plt.semilogy(history_val_loss)
+#plt.title('model loss')
+#plt.ylabel('loss')
+#plt.xlabel('epoch')
+#plt.legend(['train', 'test'], loc='upper left')
+#plt.show()
 
 ## Plotting the error with the number of iterations
 ## With each iteration the error reduces smoothly
-plt.plot(history_acc)
-plt.plot(history_val_acc)
-plt.title('model accuracy')
-plt.ylabel('accuracy')
-plt.xlabel('epoch')
-plt.legend(['train', 'test'], loc='upper left')
-plt.show()
+#plt.plot(history_acc)
+#plt.plot(history_val_acc)
+#plt.title('model accuracy')
+#plt.ylabel('accuracy')
+#plt.xlabel('epoch')
+#plt.legend(['train', 'test'], loc='upper left')
+#plt.show()
 
 ## print run time
 end = time.time()
