@@ -4,10 +4,12 @@ os.environ['KMP_DUPLICATE_LIB_OK']='True'
 import glob
 
 
-## Measure execution time, becaus Kaggle cloud fluctuates  
+## Measure execution time, becaus Kaggle cloud fluctuates
 
 import time
 start = time.time()
+
+import pickle
 
 ## Importing standard libraries
 
@@ -38,6 +40,7 @@ from keras.callbacks import EarlyStopping
 
 ## Read data from UCI 2014 BW image files
 path_to_image_dir = "data/uci_dataset_2014_with_RGB_pics/BW"
+output_file_prefix="BW"
 
 image_list = None
 species_list = []
@@ -45,7 +48,7 @@ for species_name in os.listdir(path_to_image_dir): #assuming gif
     for file_name in os.listdir("/".join([path_to_image_dir, species_name])):
         # Put species name into list
         species_list.append(species_name)
-        
+
         # Create input images
         full_path = "/".join([path_to_image_dir, species_name, file_name])
         im_np = np.array(Image.open(full_path))
@@ -57,7 +60,7 @@ for species_name in os.listdir(path_to_image_dir): #assuming gif
                 image_list = np.concatenate((image_list, im_np))
             except ValueError as e:
                 print(str(e))
-            
+
 print(image_list.shape)
 
 ## Since the labels are textual, so we encode them categorically
@@ -72,7 +75,7 @@ scalers = {}
 for i in range(X.shape[0]):
     scalers[i] = MinMaxScaler()
     #scalers[i] = MinMaxScaler(feature_range=(-1,1))
-    X[i, :, :] = scalers[i].fit_transform(X[i, :, :]) 
+    X[i, :, :] = scalers[i].fit_transform(X[i, :, :])
 
 print(X.shape)
 #print(X)
@@ -85,7 +88,7 @@ y_cat = to_categorical(y)
 print(y_cat.shape)
 
 ## retain class balances
-sss = StratifiedShuffleSplit(n_splits=10, test_size=0.2,random_state=12345)
+sss = StratifiedShuffleSplit(n_splits=5, test_size=0.2,random_state=12345)
 train_index, val_index = next(iter(sss.split(X, y)))
 x_train, x_val = X[train_index], X[val_index]
 y_train, y_val = y_cat[train_index], y_cat[val_index]
@@ -105,15 +108,25 @@ print("x_val dim:   ",x_val.shape)
 
 model = Sequential()
 
-model.add(Convolution2D(16, kernel_size=(20, 20), strides=(4, 4),
-                 activation='relu',
-                 input_shape=input_shape))
-model.add(MaxPooling2D(pool_size=(2, 2), strides=(1, 1)))
-model.add(Convolution2D(32, (3, 3), activation='relu'))
-model.add(MaxPooling2D(pool_size=(2, 2)))
-model.add(Flatten())
+model.add(Convolution2D(16, kernel_size=(21, 21), strides=(20, 20),
+                        activation='relu',
+                        padding='same',
+                        input_shape=input_shape))
 
-model.add(Dense(200, activation='relu'))
+model.add(MaxPooling2D(pool_size=(2, 2), strides=(2, 2)))
+model.add(Dropout(0.1))
+
+model.add(Convolution2D(32, (3, 3), activation='relu'))
+model.add(MaxPooling2D(pool_size=(2, 2), strides=(2, 2)))
+model.add(Dropout(0.2))
+
+model.add(Convolution2D(64, (3, 3), activation='relu'))
+model.add(MaxPooling2D(pool_size=(2, 2), strides=(2, 2)))
+model.add(Dropout(0.3))
+
+
+model.add(Flatten())
+model.add(Dense(300, activation='relu'))
 model.add(Dense(30, activation='softmax'))
 
 ## Error is measured as categorical crossentropy or multiclass logloss
@@ -125,7 +138,7 @@ model.compile(loss='categorical_crossentropy',optimizer='adam', metrics = ["accu
 ## Fitting the model on the whole training data with early stopping
 early_stopping = EarlyStopping(monitor='val_loss', patience=300)
 
-history = model.fit(x_train, y_train,batch_size=10,epochs=10 ,verbose=1,
+history = model.fit(x_train, y_train,batch_size=60,epochs=80 ,verbose=1,
                     validation_data=(x_val, y_val),callbacks=[early_stopping])
 
 ## we need to consider the loss for final submission to leaderboard
@@ -137,6 +150,14 @@ print('train_loss: ',min(history.history['loss']))
 
 print()
 print("train/val loss ratio: ", min(history.history['loss'])/min(history.history['val_loss']))
+
+with open(output_file_prefix + ".train_acc.log", "wb") as fp:
+    print("dump train accuracy into: " + output_file_prefix + ".train_acc.log")
+    pickle.dump(history.history['acc'], fp)
+
+with open(output_file_prefix + ".val_acc.log", "wb") as fp:
+    print("dump val accuracy into: " + output_file_prefix + ".val_acc.log")
+    pickle.dump(history.history['val_acc'], fp)
 
 ## summarize history for loss
 ## Plotting the loss with the number of iterations
